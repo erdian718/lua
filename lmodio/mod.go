@@ -193,12 +193,12 @@ func lscanner(l *lua.State) int {
 
 func ltype(l *lua.State) int {
 	switch l.GetRaw(1).(type) {
+	case io.ReadWriter:
+		l.Push("readwriter")
 	case io.Reader:
 		l.Push("reader")
 	case io.Writer:
 		l.Push("writer")
-	case io.ReadWriter:
-		l.Push("readwriter")
 	default:
 		l.Push(nil)
 	}

@@ -295,8 +295,11 @@ func lmatch(l *lua.State) int {
 
 func lrep(l *lua.State) int {
 	s := l.OptString(1, "")
-	n := int(l.OptInteger(2, 1))
 	sep := l.OptString(3, "")
+	n := int(l.OptInteger(2, 0))
+	if n < 0 {
+		n = 0
+	}
 	xs := make([]string, n)
 	for i := 0; i < n; i++ {
 		xs[i] = s
@@ -333,10 +336,12 @@ func lsub(l *lua.State) int {
 	if j > n {
 		j = n
 	}
-	if i > j {
-		return 0
+
+	if i <= j {
+		l.Push(s[i-1 : j])
+	} else {
+		l.Push("")
 	}
-	l.Push(s[i-1 : j])
 	return 1
 }
 
