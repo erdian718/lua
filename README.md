@@ -25,9 +25,9 @@ Please refer to the README for standard libraries.
 
 ## Modules
 
-* [ofunc/stream](https://github.com/ofunc/stream)
-* [ofunc/lmodxlsx](https://github.com/ofunc/lmodxlsx)
-* [ofunc/lmodoffice](https://github.com/ofunc/lmodoffice)
+* [lmodoffice](https://github.com/ofunc/lmodoffice) - A simple Lua module for converting various office documents into OOXML format files.
+* [lmodxlsx](https://github.com/ofunc/lmodxlsx) - plandem/xlsx bindings for Lua.
+* [stream](https://github.com/ofunc/stream) - A simple lazy list module for Lua.
 
 ## Missing Stuff
 
