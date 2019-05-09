@@ -21,7 +21,7 @@ func main() {
 }
 ```
 
-More examples refer to tests.
+Please refer to the README for standard libraries.
 
 ## Modules
 
