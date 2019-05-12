@@ -30,7 +30,7 @@ type sorter lua.State
 
 // Len is the number of elements in the collection.
 func (self *sorter) Len() int {
-	return (*lua.State)(self).Length(1)
+	return int((*lua.State)(self).Length(1))
 }
 
 // Less reports whether the element with index i should sort before the element with index j.

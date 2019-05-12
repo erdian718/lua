@@ -192,8 +192,10 @@ func toInteger(v value) int64 {
 
 func (l *State) getTable(t, k value) value {
 	tbl, ok := t.(*table)
-	if ok && tbl.Exists(k) {
-		return tbl.GetRaw(k)
+	if ok {
+		if v := tbl.Get(k); v != nil {
+			return v
+		}
 	}
 
 	meth := l.getMetaField(t, "__index")
@@ -217,7 +219,7 @@ func (l *State) getTable(t, k value) value {
 	}
 
 	if ok {
-		return tbl.GetRaw(k)
+		return tbl.Get(k)
 	}
 	panic("Value is not a table and has no __index meta method.")
 	panic("UNREACHABLE")
@@ -225,8 +227,8 @@ func (l *State) getTable(t, k value) value {
 
 func (l *State) setTable(t, k, v value) {
 	tbl, ok := t.(*table)
-	if ok && tbl.Exists(k) {
-		tbl.SetRaw(k, v)
+	if ok && tbl.Get(k) != nil {
+		tbl.Set(k, v)
 		return
 	}
 
@@ -250,7 +252,7 @@ func (l *State) setTable(t, k, v value) {
 		return
 	}
 	if ok {
-		tbl.SetRaw(k, v)
+		tbl.Set(k, v)
 		return
 	}
 	panic("Value is not a table and has no __newindex meta method.")
@@ -628,5 +630,5 @@ func (l *State) getMetaField(v value, name string) value {
 	if m == nil {
 		return nil
 	}
-	return m.GetRaw(name)
+	return m.Get(name)
 }

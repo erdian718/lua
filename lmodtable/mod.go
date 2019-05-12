@@ -87,7 +87,7 @@ func linsert(l *lua.State) int {
 	v := 2
 
 	if l.AbsIndex(-1) > 2 {
-		p = int(l.ToInteger(2))
+		p = l.ToInteger(2)
 		v = 3
 	}
 	for i := n; i >= p; i-- {
@@ -135,7 +135,7 @@ func lmove(l *lua.State) int {
 
 func lpack(l *lua.State) int {
 	n := l.AbsIndex(-1)
-	l.NewTable(n, 2)
+	l.NewTable(int64(n), 2)
 	idx := l.AbsIndex(-1)
 	l.Push("n")
 	l.Push(n)

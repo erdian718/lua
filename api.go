@@ -184,7 +184,7 @@ func (l *State) Set(d, s int) {
 
 // SetGlobal pops a value from the stack and sets it as the new value of global name.
 func (l *State) SetGlobal(name string) {
-	l.global.SetRaw(name, l.stack.Get(-1))
+	l.global.Set(name, l.stack.Get(-1))
 	l.stack.Pop(1)
 }
 
@@ -206,13 +206,13 @@ func (l *State) SetUpValue(f, i, v int) bool {
 
 // Preload adds the given loader function for "require".
 func (l *State) Preload(name string, loader func(*State) int) {
-	loaded, ok := l.registry.GetRaw("_PRELOAD").(*table)
+	loaded, ok := l.registry.Get("_PRELOAD").(*table)
 	if !ok {
 		loaded = newTable(l, 0, 16)
-		l.registry.SetRaw("_PRELOAD", loaded)
+		l.registry.Set("_PRELOAD", loaded)
 	}
 	l.Push(loader)
-	loaded.SetRaw(name, l.get(-1))
+	loaded.Set(name, l.get(-1))
 	l.Pop(1)
 }
 
@@ -331,7 +331,7 @@ func (l *State) CompareRaw(i1, i2 int, op opCode) bool {
 }
 
 // NewTable creates a new table with "as" preallocated array elements and "hs" preallocated hash elements.
-func (l *State) NewTable(as, hs int) {
+func (l *State) NewTable(as, hs int64) {
 	l.stack.Push(newTable(l, as, hs))
 }
 
@@ -352,7 +352,7 @@ func (l *State) GetTableRaw(i int) TypeID {
 	k := l.stack.Get(-1)
 	l.Pop(1)
 	if t, ok := x.(*table); ok {
-		v := t.GetRaw(k)
+		v := t.Get(k)
 		l.Push(v)
 		return typeOf(v)
 	} else {
@@ -376,7 +376,7 @@ func (l *State) SetTableRaw(i int) {
 	v := l.stack.Get(-1)
 	l.Pop(2)
 	if t, ok := x.(*table); ok {
-		t.SetRaw(k, v)
+		t.Set(k, v)
 	} else {
 		panic(errors.New("not a table: " + toString(x)))
 	}
@@ -462,10 +462,10 @@ func (l *State) ForEachRaw(t int, f func() bool) {
 
 // Returns the "length" of the item at the given index, exactly like the "#" operator would.
 // If this calls a meta method it may raise an error if the length is not an integer.
-func (l *State) Length(i int) int {
+func (l *State) Length(i int) int64 {
 	v := l.get(i)
 	if s, ok := v.(string); ok {
-		return len(s)
+		return int64(len(s))
 	} else if m := l.getMetaField(v, "__len"); m != nil {
 		if f, ok := m.(*function); ok {
 			l.Push(f)
@@ -473,7 +473,7 @@ func (l *State) Length(i int) int {
 			l.Call(1, 1)
 			r := l.stack.Get(-1)
 			l.Pop(1)
-			return int(toInteger(r))
+			return toInteger(r)
 		} else {
 			panic(errors.New("meta method __len is not a function: " + toString(m)))
 		}
@@ -486,10 +486,10 @@ func (l *State) Length(i int) int {
 
 // Returns the length of the table or string at the given index. This does not call meta methods.
 // If the value is not a table or string this will raise an error.
-func (l *State) LengthRaw(i int) int {
+func (l *State) LengthRaw(i int) int64 {
 	v := l.get(i)
 	if s, ok := v.(string); ok {
-		return len(s)
+		return int64(len(s))
 	} else if t, ok := v.(*table); ok {
 		return t.Length()
 	} else {

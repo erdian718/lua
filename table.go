@@ -1,5 +1,5 @@
 /*
-Copyright 2016-2017 by Milo Christiansen
+Copyright 2019 by ofunc
 
 This software is provided 'as-is', without any express or implied warranty. In
 no event will the authors be held liable for any damages arising from the use of
@@ -20,383 +20,198 @@ misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 */
 
-// Encoding canary: '§' ALT+0167, ALT+21
-// If the above line does not contain a "section" character then this file has not been properly recognized as UTF-8.
-// (sometimes Notepad++ thinks this is encoded in TIS-620 (Thai) and breaks the section characters)
-
 package lua
 
-import "math"
-import "runtime"
+import (
+	"math"
+	"runtime"
+)
 
 // table is the VM's table type.
 type table struct {
-	meta *table
-	l    *State
-
-	array  []value
-	length int // The stored sequence length, negative values signify that the length needs to be recalculated.
-
-	hash map[value]value
-
-	// For use with next
-	iorder []value
-	ikeys  map[value]int
+	array []value
+	hash  map[value]value
+	base  int64
+	nums  []int64
+	meta  *table
 }
 
-func newTable(l *State, as, hs int) *table {
+func newTable(l *State, as, hs int64) *table {
 	t := new(table)
-	t.l = l
-
 	if as > 0 {
 		t.array = make([]value, as)
 	}
 	if hs > 0 {
 		t.hash = make(map[value]value, hs)
-	} else {
-		t.hash = make(map[value]value)
 	}
-
+	t.base = 1
+	for {
+		n := t.base << 1
+		if n > as {
+			break
+		}
+		t.base = n
+	}
 	return t
 }
 
-// extend grows the table's underlying array part until it is last elements long, then tries to move as many
-// items from the hash part to the array part as possible.
-func (tbl *table) extend(last int) {
-	tbl.array = append(tbl.array, make([]value, last-len(tbl.array))...)
-	for k, v := range tbl.hash {
-		switch idx := k.(type) {
-		case float64:
-			if i := int(idx); float64(i) == idx {
-				i2 := i - 1
-				if 0 <= i2 && i2 < len(tbl.array) {
-					tbl.array[i2] = v
-					delete(tbl.hash, k)
-				}
-			}
-		case int64:
-			if i2 := int(idx) - 1; 0 <= i2 && i2 < len(tbl.array) {
-				tbl.array[i2] = v
-				delete(tbl.hash, k)
-			}
-		}
-	}
+// Length returns the raw table length as would be returned by the length operator.
+func (tbl *table) Length() int64 {
+	return tbl.count(0, len(tbl.nums))
 }
 
-// maybeExtend checks to see if it is worth extending the array part of the table to fit key.
-// If the return value is true then the array can fit the the key (either it was extended or was already large enough).
-// This takes an index from 0!
-func (tbl *table) maybeExtend(key int) bool {
-	if key < len(tbl.array) {
-		// Array long enough.
-		return true
-	}
-
-	// TODO: Is there a better way to handle this kind of situation?
-	// The current algorithm is kinda slow, is there some way to cut down on hash lookups?
-
-	occupancy := 0
-	for _, v := range tbl.array {
-		if v != nil {
-			occupancy++
-		}
-	}
-
-	for k, _ := range tbl.hash {
-		switch idx := k.(type) {
-		case float64:
-			if i := int(idx); float64(i) == idx {
-				if i < key {
-					occupancy++
-				}
-			}
-		case int64:
-			if int(idx) < key {
-				occupancy++
-			}
-		}
-	}
-
-	if occupancy == 0 && key == 0 {
-		tbl.array = make([]value, 1, 32)
-		return true
-	}
-	if occupancy > key/2 {
-		// Scan upward looking for the first place occupancy falls below 50%.
-		// This is required to guarantee that contiguous array segments are not left out, if this
-		// was not done then building an array starting from the last index and working down would
-		// result in everything being stored in hash indexes. Building from the top down is still
-		// a bad idea (as you will have half the items added before crossing the threshold for
-		// creating an array), but at least it works now...
-		o := occupancy
-		k := key
-		n := 0
-		for ; o > k/2; k++ {
-			if tbl.hash[int64(k)] != nil {
-				o++
-				n++
-			}
-		}
-		// If array candidates are found in the >50% area above key, extend the array to the top of the overall >50% area.
-		if n > 0 {
-			tbl.extend(k)
-			return true
-		}
-
-		occupancy *= 2
-		if occupancy > key {
-			tbl.extend(occupancy)
-			return true
-		}
-
-		tbl.extend(key)
-		return true
-	}
-	return false
+// Count returns the raw table pairs number.
+func (tbl *table) Count() int64 {
+	return tbl.count(0, 1) + int64(len(tbl.hash))
 }
 
-// Internal helper
-func (tbl *table) setInt(k int64, v value) {
-	// Store the value or clear the key.
-	hash := false
-	k2 := int(k) - 1
-	k2ok := int64(int(k)) == k
-	if k2ok && k2 >= 0 && k2 < len(tbl.array) {
-		tbl.array[k2] = v
-	} else if k2ok && k2 >= 0 && v != nil && tbl.maybeExtend(k2) {
-		tbl.array[k2] = v
-	} else if v == nil {
-		hash = true
-		delete(tbl.hash, k)
-	} else {
-		hash = true
-		tbl.hash[k] = v
-	}
-
-	// Decide if the stored length was invalidated and fix it if possible.
-
-	// No need to do anything if the value was stored/removed from the hash part.
-	// We don't need to worry about values added to the hash when the array portion is full, as this is impossible.
-	if hash {
-		return
-	}
-
-	// If we removed a key, check to see if it is inside the old sequence, then shorten the sequence as needed.
-	if v == nil {
-		if k2 < tbl.length {
-			// All items before the one we just removed are known valid.
-			tbl.length = k2
-		}
-		return
-	}
-
-	// If we set a key that is immediately after the end of the old sequence then invalidate the stored length.
-	// We don't try to calculate the new length because we have no way of knowing how long it will take or even
-	// if it will ever be needed. It would be possible to store the old length to give the next scan a running
-	// start, but that would complicate things for a gain that would likely be very small.
-	if k2 == tbl.length {
-		tbl.length = -1
-	}
-}
-
-// Exists returns true if the given index exists in the table.
-func (tbl *table) Exists(k value) bool {
+// Get reads the value at index k from the table without using any meta methods.
+func (tbl *table) Get(k value) value {
 	switch idx := k.(type) {
-	case nil:
-		return false
-	case float64:
-		if math.IsNaN(idx) {
-			return false
-		}
-
-		if i := int64(idx); float64(i) == idx {
-			return tbl.existsInt(i)
-		}
-		v, ok := tbl.hash[k]
-		return ok && v != nil
 	case int64:
-		return tbl.existsInt(idx)
-	default:
-		v, ok := tbl.hash[k]
-		return ok && v != nil
-	}
-}
-
-func (tbl *table) existsInt(k int64) bool {
-	k2 := int(k) - 1
-	k2ok := int64(int(k)) == k
-	if k2ok && 0 <= k2 && k2 < len(tbl.array) {
-		return tbl.array[k2] != nil
-	}
-	v, ok := tbl.hash[k]
-	return ok && v != nil
-}
-
-// SetRaw sets a key k in the table to the value v without using any meta methods.
-func (tbl *table) SetRaw(k, v value) {
-	switch idx := k.(type) {
-	case nil:
-		panic("Cannot set nil table index.")
-	case float64:
-		if math.IsNaN(idx) {
-			return
+		if idx >= 1 && idx <= int64(len(tbl.array)) {
+			return tbl.array[idx-1]
 		}
-
-		if i := int64(idx); float64(i) == idx {
-			tbl.setInt(i, v)
-		} else if v == nil {
-			delete(tbl.hash, k)
-		} else {
-			tbl.hash[k] = v
-		}
-	case int64:
-		tbl.setInt(idx, v)
-	default:
-		if v == nil {
-			delete(tbl.hash, k)
-		} else {
-			tbl.hash[k] = v
-		}
-	}
-}
-
-// Internal helper
-func (tbl *table) getInt(k int64) value {
-	k2 := int(k) - 1
-	k2ok := int64(int(k)) == k
-	if k2ok && 0 <= k2 && k2 < len(tbl.array) {
-		return tbl.array[k2]
-	}
-	return tbl.hash[k]
-}
-
-// GetRaw reads the value at index k from the table without using any meta methods.
-func (tbl *table) GetRaw(k value) value {
-	switch idx := k.(type) {
-	case nil:
-		return nil
 	case float64:
 		if math.IsNaN(idx) {
 			return nil
 		}
-
 		if i := int64(idx); float64(i) == idx {
-			return tbl.getInt(i)
+			if i >= 1 && i <= int64(len(tbl.array)) {
+				return tbl.array[i-1]
+			}
 		}
-	case int64:
-		return tbl.getInt(idx)
+	case nil:
+		return nil
 	}
-	// Non-number or non-integral float.
 	return tbl.hash[k]
 }
 
-// length returns the raw table length as would be returned by the length operator.
-//
-// The Lua spec does not match the reference implementation here, ironically the example the spec
-// gives as something that won't work works fine in practice. Here I follow the spec (mostly
-// because it is easier that way).
-//
-// Actually the reference implementation seems to be weirdly inconsistent...
-//	print(#{1, 2, 3, nil, 4}) -- Prints "5" (spec says should be "3")
-//	print(#{1, 2, 3, nil}) -- Prints "3" (this matches the spec)
-//	print(#{a = 1, 1, [3] = 2, b = 2, c = 3}) -- Prints "1" (also correct)
-//	print(#{[1] = "", [2] = "", [3] = nil, [4] = ""}) -- Prints "4" (spec says should be "2")
-//
-// Selected quotes from the Lua Reference Manual (for Lua 5.3):
-//
-// From §2.1:
-//	Any key with value nil is not considered part of the table. Conversely, any key that is not part of a
-//	table has an associated value nil.
-//
-// From §2.1:
-//	We use the term sequence to denote a table where the set of all positive numeric keys is equal to {1..n}
-//	for some non-negative integer n, which is called the length of the sequence (see §3.4.7).
-//
-// From §3.4.7:
-//	Unless a __len metamethod is given, the length of a table t is only defined if the table is a sequence,
-//	that is, the set of its positive numeric keys is equal to {1..n} for some non-negative integer n. In that
-// 	case, n is its length.
-//
-// I read this to mean that a sequence starts with index 1 and runs to the last integer index that is non-nil
-// where there are no nil (aka missing) values between them. Technically the spec makes it sound like ANY holes
-// in the array should keep it from being a sequence AT ALL, but this seems like overkill and too hard to implement.
-func (tbl *table) Length() int {
-	// If possible use the stored length.
-	if tbl.length >= 0 {
-		return tbl.length
-	}
-
-	// Find the length of the the array up to the first nil value.
-	// Due to the way tbl.extend works we don't have to worry about the hash part
-	// (adding an item to the end of a non-sparse array will always extend it).
-	length := 0
-	for _, v := range tbl.array {
-		if v == nil {
-			break
+// Set sets a key k in the table to the value v without using any meta methods.
+func (tbl *table) Set(k, v value) {
+	switch idx := k.(type) {
+	case int64:
+		if idx >= 1 {
+			tbl.seti(idx, v)
+			return
 		}
-		length++
+	case float64:
+		if math.IsNaN(idx) {
+			panic("cannot set nan table index")
+		}
+		if i := int64(idx); float64(i) == idx {
+			k = i
+			if i >= 1 {
+				tbl.seti(i, v)
+				return
+			}
+		}
+	case nil:
+		panic("cannot set nil table index")
 	}
-	tbl.length = length
-	return length
+	if v == nil {
+		delete(tbl.hash, k)
+	} else {
+		if tbl.hash == nil {
+			tbl.hash = make(map[value]value)
+		}
+		tbl.hash[k] = v
+	}
 }
 
-// Next allows you to iterate over all keys in a table.
-// This function is NOT reentrant! You cannot iterate over a table while another iteration (of the same table) is
-// ongoing, trying to do so will mess up the iteration order causing some keys to not be visited or to be visited twice.
-// To start (or restart) an iteration pass nil as the key, subsequent passes should pass the key
-// gotten from the previous call. Once there are no more items this function returns nil for both key and value.
-// Passing in a key that does not exist will also make this return nil, nil.
-func (tbl *table) Next(key value) (value, value) {
-	if key == nil || tbl.ikeys == nil {
-		tbl.ikeys = make(map[value]int, len(tbl.hash))
-		tbl.iorder = make([]value, 0, len(tbl.hash))
-		var last value
-		for i := range tbl.hash {
-			last = i
-			tbl.iorder = append(tbl.iorder, i)
-			tbl.ikeys[i] = len(tbl.iorder)
-		}
-		if last != nil {
-			tbl.ikeys[last] = -1
-		}
-	}
-
-	// Try the key as a hash index.
-	// We need a loop here to handle the case where a key was removed while iterating.
-	idx, ok := 0, true
-	if key != nil {
-		idx, ok = tbl.ikeys[key]
-	}
-	for ok && idx >= 0 && idx < len(tbl.iorder) {
-		k := tbl.iorder[idx]
-		v := tbl.hash[k]
-		if v == nil {
-			idx, ok = tbl.ikeys[k]
-			continue
-		}
-		return k, v
-	}
-	if idx == -1 || key == nil {
-		key = int64(0)
-	}
-
-	// Not in hash or all hash keys used, try to use the key as an array index.
-	if i, err := tryInteger(key); err == nil {
-		// Find the next valid key after i
-		i++
-		for i <= int64(len(tbl.array)) {
-			v := tbl.array[i-1]
-			if v != nil {
-				return i, v
+func (tbl *table) seti(i int64, v value) {
+	n := int64(len(tbl.array))
+	if i <= n {
+		x := tbl.array[i-1]
+		if x != v {
+			if v == nil {
+				tbl.nums[tbl.index(i)] -= 1
+			} else if x == nil {
+				tbl.nums[tbl.index(i)] += 1
 			}
-			i++
+			tbl.array[i-1] = v
+		}
+	} else {
+		var x value
+		if tbl.hash != nil {
+			x = tbl.hash[i]
+		}
+		if x != v {
+			if v == nil {
+				tbl.nums[tbl.index(i)] -= 1
+				delete(tbl.hash, i)
+			} else if x == nil {
+				tbl.nums[tbl.index(i)] += 1
+				if tbl.extend() {
+					tbl.array[i-1] = v
+				} else {
+					if tbl.hash == nil {
+						tbl.hash = make(map[value]value)
+					}
+					tbl.hash[i] = v
+				}
+			} else {
+				tbl.hash[i] = v
+			}
 		}
 	}
+}
 
-	// Key did not exist when iteration started or is the last key.
-	tbl.ikeys = nil
-	tbl.iorder = nil
-	return nil, nil
+func (tbl *table) extend() bool {
+	s := tbl.Length()
+	m := uint(len(tbl.nums)) - 1
+	var n int64
+	for ; m > 0; m-- {
+		n = tbl.base << m
+		if 2*s >= n {
+			break
+		}
+		s -= tbl.nums[m]
+	}
+	if m < 1 {
+		return false
+	}
+
+	tbl.base = n
+	array := make([]value, n)
+	copy(array, tbl.array)
+	tbl.array = array
+	for k, v := range tbl.hash {
+		if i, ok := k.(int64); ok && i >= 1 && i <= n {
+			array[i-1] = v
+			delete(tbl.hash, i)
+		}
+	}
+	return true
+}
+
+func (tbl *table) count(i, j int) int64 {
+	n := len(tbl.nums)
+	if j > n {
+		j = n
+	}
+	var s int64
+	for k := i; k < j; k++ {
+		s += tbl.nums[k]
+	}
+	return s
+}
+
+func (tbl *table) index(i int64) uint {
+	var m uint
+	if n := int64(len(tbl.array)); i <= n {
+		m = 0
+	} else {
+		for tbl.base<<m < i {
+			m++
+		}
+	}
+	if m >= uint(len(tbl.nums)) {
+		nums := make([]int64, m+1)
+		copy(nums, tbl.nums)
+		tbl.nums = nums
+	}
+	return m
 }
 
 // The real table iterator

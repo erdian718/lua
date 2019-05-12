@@ -53,10 +53,10 @@ func NewState() *State {
 	}
 
 	l.global = newTable(l, 0, 64)
-	l.global.SetRaw("_G", l.global)
+	l.global.Set("_G", l.global)
 
 	l.registry = newTable(l, 0, 32)
-	l.registry.SetRaw("LUA_RIDX_GLOBALS", l.global)
+	l.registry.Set("LUA_RIDX_GLOBALS", l.global)
 
 	return l
 }
