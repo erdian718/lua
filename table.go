@@ -45,9 +45,10 @@ func newTable(l *State, as, hs int) *table {
 		t.hash = make(map[value]value, hs)
 	}
 	t.base = 1
+
 	for {
 		u := t.base << 1
-		if u > as {
+		if u <= 0 || u > as {
 			break
 		}
 		t.base = u
@@ -205,11 +206,11 @@ func (tbl *table) count(i, j int) int {
 func (tbl *table) index(i int64) int {
 	m := 0
 	if int64(len(tbl.array)) < i {
-		u := int64(tbl.base)
+		u := tbl.base
 		for {
 			m++
 			u <<= 1
-			if i <= u {
+			if u <= 0 || int64(u) >= i {
 				break
 			}
 		}
