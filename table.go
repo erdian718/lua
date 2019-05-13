@@ -126,16 +126,19 @@ func (tbl *table) GetIter() func() (value, value) {
 	array := tbl.array
 	hash := reflect.ValueOf(tbl.hash).MapRange()
 	i, n := 0, len(array)
-	return func() (k value, v value) {
-		if i < n {
-			i++
-			k = int64(i)
-			v = array[i-1]
-		} else if hash.Next() {
-			k = hash.Key().Interface()
-			v = hash.Value().Interface()
+	return func() (value, value) {
+		for ; i < n; i++ {
+			if v := array[i]; v != nil {
+				i++
+				return int64(i), v
+			}
 		}
-		return
+		if hash.Next() {
+			k := hash.Key().Interface()
+			v := hash.Value().Interface()
+			return k, v
+		}
+		return nil, nil
 	}
 }
 
