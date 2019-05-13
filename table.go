@@ -24,7 +24,7 @@ package lua
 
 import (
 	"math"
-	"runtime"
+	"reflect"
 )
 
 // table is the VM's table type.
@@ -121,6 +121,24 @@ func (tbl *table) Set(k, v value) {
 	}
 }
 
+// GetIter returns the table iterator.
+func (tbl *table) GetIter() func() (value, value) {
+	array := tbl.array
+	hash := reflect.ValueOf(tbl.hash).MapRange()
+	i, n := 0, len(array)
+	return func() (k value, v value) {
+		if i < n {
+			i++
+			k = int64(i)
+			v = array[i-1]
+		} else if hash.Next() {
+			k = hash.Key().Interface()
+			v = hash.Value().Interface()
+		}
+		return
+	}
+}
+
 func (tbl *table) seti(i int64, v value) {
 	n := int64(len(tbl.array))
 	if i <= n {
@@ -162,6 +180,9 @@ func (tbl *table) seti(i int64, v value) {
 func (tbl *table) extend() bool {
 	m := len(tbl.nums) - 1
 	u := tbl.base << uint(m)
+	if u <= 0 {
+		return false
+	}
 	for s := tbl.Length(); m > 0; m-- {
 		u >>= 1
 		if s >= u {
@@ -221,83 +242,4 @@ func (tbl *table) index(i int64) int {
 		tbl.nums = nums
 	}
 	return m
-}
-
-// The real table iterator
-// This one is reentrant.
-type tableIter struct {
-	kill   chan bool
-	result chan []value
-
-	data *table
-}
-
-func newTableIter(d *table) *tableIter {
-	kill := make(chan bool)
-	result := make(chan []value)
-
-	i := &tableIter{
-		kill:   kill,
-		result: result,
-		data:   d,
-	}
-
-	// So long as this function contains no references to i it will die when i is finalized (references here
-	// will keep i from ever being finalized unless you visit every key).
-	// d is not a problem, as i will always be collected first.
-	go func() {
-		for k, v := range d.array {
-			if v == nil {
-				continue
-			}
-
-			select {
-			case <-kill:
-				close(result) // Just in case...
-				return
-			case result <- []value{k + 1, v}:
-			}
-		}
-
-		for k, v := range d.hash {
-			select {
-			case <-kill:
-				close(result) // Just in case...
-				return
-			case result <- []value{k, v}:
-			}
-		}
-		close(result) // Needed so Next will not block after the last key is visited.
-		select {
-		case <-i.kill:
-		default:
-			close(i.kill)
-		}
-	}()
-
-	runtime.SetFinalizer(i, func(i *tableIter) {
-		select {
-		case <-i.kill:
-		default:
-			close(i.kill)
-		}
-	})
-
-	return i
-}
-
-func (i *tableIter) Next() (value, value) {
-	k, ok := <-i.result
-	if !ok {
-		return nil, nil
-	}
-	return k[0], k[1]
-}
-
-func (i *tableIter) Kill() {
-	select {
-	case <-i.kill:
-	default:
-		close(i.kill)
-	}
 }

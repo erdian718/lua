@@ -383,30 +383,17 @@ func (l *State) SetTableRaw(i int) {
 }
 
 // GetIter pushes a table iterator onto the stack.
-// This value is type "userdata" and has a "__call" meta method. Calling the iterator will
-// push the next key/value pair onto the stack. The key is not required for the next
-// iteration, so unlike Next you must pop both values.
-// The end of iteration is signaled by returning a single nil value.
 // If the given value is not a table this will raise an error.
 func (l *State) GetIter(i int) {
 	x := l.get(i)
 	if t, ok := x.(*table); ok {
-		l.Push(newTableIter(t))
-		l.NewTable(0, 1)
-		l.Push("__call")
+		next := t.GetIter()
 		l.Push(func(l *State) int {
-			i := l.GetRaw(1).(*tableIter)
-			k, v := i.Next()
-			if k == nil {
-				l.Push(k)
-				return 1
-			}
+			k, v := next()
 			l.Push(k)
 			l.Push(v)
 			return 2
 		})
-		l.SetTableRaw(-3)
-		l.SetMetaTable(-2)
 	} else {
 		panic(errors.New("not a table: " + toString(x)))
 	}
