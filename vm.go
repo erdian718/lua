@@ -196,7 +196,7 @@ func init() {
 		func(l *State, i instruction) bool {
 			var tbl *table
 			if b, c := float8(i.b()), float8(i.c()); b != 0 || c != 0 {
-				tbl = newTable(l, int64(intFromFloat8(b)), int64(intFromFloat8(c)))
+				tbl = newTable(l, intFromFloat8(b), intFromFloat8(c))
 			} else {
 				tbl = newTable(l, 0, 0)
 			}

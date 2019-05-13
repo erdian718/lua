@@ -82,7 +82,7 @@ func lconcat(l *lua.State) int {
 }
 
 func linsert(l *lua.State) int {
-	n := l.Length(1)
+	n := int64(l.Length(1))
 	p := n + 1
 	v := 2
 
@@ -135,7 +135,7 @@ func lmove(l *lua.State) int {
 
 func lpack(l *lua.State) int {
 	n := l.AbsIndex(-1)
-	l.NewTable(int64(n), 2)
+	l.NewTable(n, 2)
 	idx := l.AbsIndex(-1)
 	l.Push("n")
 	l.Push(n)

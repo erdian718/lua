@@ -31,12 +31,12 @@ import (
 type table struct {
 	array []value
 	hash  map[value]value
-	base  int64
-	nums  []int64
+	base  int
+	nums  []int
 	meta  *table
 }
 
-func newTable(l *State, as, hs int64) *table {
+func newTable(l *State, as, hs int) *table {
 	t := new(table)
 	if as > 0 {
 		t.array = make([]value, as)
@@ -56,13 +56,13 @@ func newTable(l *State, as, hs int64) *table {
 }
 
 // Length returns the raw table length as would be returned by the length operator.
-func (tbl *table) Length() int64 {
+func (tbl *table) Length() int {
 	return tbl.count(0, len(tbl.nums))
 }
 
 // Count returns the raw table pairs number.
-func (tbl *table) Count() int64 {
-	return tbl.count(0, 1) + int64(len(tbl.hash))
+func (tbl *table) Count() int {
+	return tbl.count(0, 1) + len(tbl.hash)
 }
 
 // Get reads the value at index k from the table without using any meta methods.
@@ -160,7 +160,7 @@ func (tbl *table) seti(i int64, v value) {
 func (tbl *table) extend() bool {
 	s := tbl.Length()
 	m := uint(len(tbl.nums)) - 1
-	var n int64
+	n := 0
 	for ; m > 0; m-- {
 		n = tbl.base << m
 		if 2*s >= n {
@@ -177,7 +177,7 @@ func (tbl *table) extend() bool {
 	copy(array, tbl.array)
 	tbl.array = array
 	for k, v := range tbl.hash {
-		if i, ok := k.(int64); ok && i >= 1 && i <= n {
+		if i, ok := k.(int64); ok && i >= 1 && i <= int64(n) {
 			array[i-1] = v
 			delete(tbl.hash, i)
 		}
@@ -185,12 +185,12 @@ func (tbl *table) extend() bool {
 	return true
 }
 
-func (tbl *table) count(i, j int) int64 {
+func (tbl *table) count(i, j int) int {
 	n := len(tbl.nums)
 	if j > n {
 		j = n
 	}
-	var s int64
+	s := 0
 	for k := i; k < j; k++ {
 		s += tbl.nums[k]
 	}
@@ -202,12 +202,12 @@ func (tbl *table) index(i int64) uint {
 	if n := int64(len(tbl.array)); i <= n {
 		m = 0
 	} else {
-		for tbl.base<<m < i {
+		for int64(tbl.base<<m) < i {
 			m++
 		}
 	}
 	if m >= uint(len(tbl.nums)) {
-		nums := make([]int64, m+1)
+		nums := make([]int, m+1)
 		copy(nums, tbl.nums)
 		tbl.nums = nums
 	}

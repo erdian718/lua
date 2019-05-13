@@ -331,7 +331,7 @@ func (l *State) CompareRaw(i1, i2 int, op opCode) bool {
 }
 
 // NewTable creates a new table with "as" preallocated array elements and "hs" preallocated hash elements.
-func (l *State) NewTable(as, hs int64) {
+func (l *State) NewTable(as, hs int) {
 	l.stack.Push(newTable(l, as, hs))
 }
 
@@ -462,10 +462,10 @@ func (l *State) ForEachRaw(t int, f func() bool) {
 
 // Returns the "length" of the item at the given index, exactly like the "#" operator would.
 // If this calls a meta method it may raise an error if the length is not an integer.
-func (l *State) Length(i int) int64 {
+func (l *State) Length(i int) int {
 	v := l.get(i)
 	if s, ok := v.(string); ok {
-		return int64(len(s))
+		return len(s)
 	} else if m := l.getMetaField(v, "__len"); m != nil {
 		if f, ok := m.(*function); ok {
 			l.Push(f)
@@ -473,7 +473,7 @@ func (l *State) Length(i int) int64 {
 			l.Call(1, 1)
 			r := l.stack.Get(-1)
 			l.Pop(1)
-			return toInteger(r)
+			return int(toInteger(r))
 		} else {
 			panic(errors.New("meta method __len is not a function: " + toString(m)))
 		}
@@ -486,10 +486,10 @@ func (l *State) Length(i int) int64 {
 
 // Returns the length of the table or string at the given index. This does not call meta methods.
 // If the value is not a table or string this will raise an error.
-func (l *State) LengthRaw(i int) int64 {
+func (l *State) LengthRaw(i int) int {
 	v := l.get(i)
 	if s, ok := v.(string); ok {
-		return int64(len(s))
+		return len(s)
 	} else if t, ok := v.(*table); ok {
 		return t.Length()
 	} else {
