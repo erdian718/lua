@@ -46,11 +46,11 @@ func newTable(l *State, as, hs int) *table {
 	}
 	t.base = 1
 	for {
-		n := t.base << 1
-		if n > as {
+		u := t.base << 1
+		if u > as {
 			break
 		}
-		t.base = n
+		t.base = u
 	}
 	return t
 }
@@ -109,6 +109,7 @@ func (tbl *table) Set(k, v value) {
 	case nil:
 		panic("cannot set nil table index")
 	}
+
 	if v == nil {
 		delete(tbl.hash, k)
 	} else {
@@ -158,12 +159,11 @@ func (tbl *table) seti(i int64, v value) {
 }
 
 func (tbl *table) extend() bool {
-	s := tbl.Length()
-	m := uint(len(tbl.nums)) - 1
-	n := 0
-	for ; m > 0; m-- {
-		n = tbl.base << m
-		if 2*s >= n {
+	m := len(tbl.nums) - 1
+	u := tbl.base << uint(m)
+	for s := tbl.Length(); m > 0; m-- {
+		u >>= 1
+		if s >= u {
 			break
 		}
 		s -= tbl.nums[m]
@@ -172,16 +172,21 @@ func (tbl *table) extend() bool {
 		return false
 	}
 
-	tbl.base = n
-	array := make([]value, n)
+	u <<= 1
+	tbl.base = u
+	array := make([]value, u)
 	copy(array, tbl.array)
 	tbl.array = array
 	for k, v := range tbl.hash {
-		if i, ok := k.(int64); ok && i >= 1 && i <= int64(n) {
+		if i, ok := k.(int64); ok && i >= 1 && i <= int64(u) {
 			array[i-1] = v
 			delete(tbl.hash, i)
 		}
 	}
+	nums := make([]int, len(tbl.nums)-m)
+	nums[0] = tbl.count(0, m+1)
+	copy(nums[1:], tbl.nums[1+m:])
+	tbl.nums = nums
 	return true
 }
 
@@ -197,16 +202,19 @@ func (tbl *table) count(i, j int) int {
 	return s
 }
 
-func (tbl *table) index(i int64) uint {
-	var m uint
-	if n := int64(len(tbl.array)); i <= n {
-		m = 0
-	} else {
-		for int64(tbl.base<<m) < i {
+func (tbl *table) index(i int64) int {
+	m := 0
+	if int64(len(tbl.array)) < i {
+		u := int64(tbl.base)
+		for {
 			m++
+			u <<= 1
+			if i <= u {
+				break
+			}
 		}
 	}
-	if m >= uint(len(tbl.nums)) {
+	if m >= len(tbl.nums) {
 		nums := make([]int, m+1)
 		copy(nums, tbl.nums)
 		tbl.nums = nums
