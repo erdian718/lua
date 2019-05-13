@@ -16,6 +16,9 @@ function test.table()
 	assert(t[4] == 'D')
 	assert(t[5] == 'E')
 	assert(t[6] == nil)
+	t[4] = nil
+	t[5] = nil
+	assert(#t == 3)
 
 	local t = {
 		k1 = 123;
@@ -52,7 +55,6 @@ function test.table()
 	assert(t[3] == 'v3')
 	assert(t[4] == 'v4')
 	assert(t[5] == 'v5')
-
 	local n = 0
 	for k, v in pairs(t) do
 		n = n + 1
