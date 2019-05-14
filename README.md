@@ -23,6 +23,10 @@ func main() {
 
 Please refer to the README for standard libraries.
 
+## Dependencies
+
+[Go 1.12 or later](http://golang.org/)
+
 ## Modules
 
 * [lmodoffice](https://github.com/ofunc/lmodoffice) - A simple Lua module for converting various office documents into OOXML format files.
@@ -65,7 +69,7 @@ The following modules are not implemented exactly as the Lua 5.3 specification r
 There are a few things that are implemented exactly as the Lua 5.3 specification requires, where the reference
 Lua implementation does not follow the specification exactly:
 
-* The `#` (length) operator always returns the exact length of a (table) sequence, not the total length of the array portion of the table.
+* The `#` (length) operator always returns the number of positive integer keys. When the table is a sequence, it's exactly equal to the sequence's length.
 * Modulo operator (`%`) is implemented the same way most languages implement it, not the way Lua does. This does not matter unless you are using negative operands.
 
 * * *
