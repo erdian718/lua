@@ -193,11 +193,10 @@ func (tbl *table) extend(idx int64) bool {
 		}
 		s -= tbl.nums[m]
 	}
+	u <<= 1
 	if m < 1 || int64(u) < idx {
 		return false
 	}
-
-	u <<= 1
 	tbl.base = u
 	array := make([]value, u)
 	copy(array, tbl.array)
