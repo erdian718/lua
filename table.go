@@ -165,7 +165,7 @@ func (tbl *table) seti(i int64, v value) {
 				delete(tbl.hash, i)
 			} else if x == nil {
 				tbl.nums[tbl.index(i)] += 1
-				if tbl.extend() {
+				if tbl.extend(i) {
 					tbl.array[i-1] = v
 				} else {
 					if tbl.hash == nil {
@@ -180,20 +180,20 @@ func (tbl *table) seti(i int64, v value) {
 	}
 }
 
-func (tbl *table) extend() bool {
+func (tbl *table) extend(idx int64) bool {
 	m := len(tbl.nums) - 1
 	u := tbl.base << uint(m)
 	if u <= 0 {
 		return false
 	}
-	for s := tbl.Length(); m > 0; m-- {
+	for s := tbl.Length(); m >= 1 && int64(u) >= idx; m-- {
 		u >>= 1
 		if s >= u {
 			break
 		}
 		s -= tbl.nums[m]
 	}
-	if m < 1 {
+	if m < 1 || int64(u) < idx {
 		return false
 	}
 
