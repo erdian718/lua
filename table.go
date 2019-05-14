@@ -186,7 +186,10 @@ func (tbl *table) extend(idx int64) bool {
 	if u <= 0 {
 		return false
 	}
-	for s := tbl.Length(); m >= 1 && int64(u) >= idx; m-- {
+	for s := tbl.Length(); ; m-- {
+		if m < 1 || int64(u) < idx {
+			return false
+		}
 		u >>= 1
 		if s >= u {
 			break
@@ -194,9 +197,6 @@ func (tbl *table) extend(idx int64) bool {
 		s -= tbl.nums[m]
 	}
 	u <<= 1
-	if m < 1 || int64(u) < idx {
-		return false
-	}
 	tbl.base = u
 	array := make([]value, u)
 	copy(array, tbl.array)
