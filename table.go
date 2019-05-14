@@ -205,7 +205,7 @@ func (tbl *table) extend() bool {
 	for k, v := range tbl.hash {
 		if i, ok := k.(int64); ok && i >= 1 && i <= int64(u) {
 			array[i-1] = v
-			delete(tbl.hash, i)
+			delete(tbl.hash, k)
 		}
 	}
 	nums := make([]int, len(tbl.nums)-m)
