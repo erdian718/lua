@@ -471,6 +471,16 @@ func (l *State) Length(i int) int {
 	}
 }
 
+// Count returns the raw table pairs number.
+func (l *State) Count(i int) int {
+	v := l.get(i)
+	if t, ok := v.(*table); ok {
+		return t.Count()
+	} else {
+		panic("not a table: " + toString(v))
+	}
+}
+
 // Returns the length of the table or string at the given index. This does not call meta methods.
 // If the value is not a table or string this will raise an error.
 func (l *State) LengthRaw(i int) int {
