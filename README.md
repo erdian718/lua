@@ -25,10 +25,11 @@ Please refer to the README for standard libraries.
 
 ## Dependencies
 
-[Go 1.12 or later](http://golang.org/)
+[Go 1.12+](http://golang.org/)
 
 ## Modules
 
+* [lmodmsgpack](https://github.com/ofunc/lmodmsgpack) - MessagePack for Lua.
 * [lmodoffice](https://github.com/ofunc/lmodoffice) - A simple Lua module for converting various office documents into OOXML format files.
 * [lmodxlsx](https://github.com/ofunc/lmodxlsx) - plandem/xlsx bindings for Lua.
 * [stream](https://github.com/ofunc/stream) - A simple lazy list module for Lua.
@@ -41,12 +42,12 @@ The following standard functions are not available:
 * `xpcall` (VM has no concept of a message handler)
 * `next` (I don't need it at this time)
 * `load` (violates my security policy)
-* `dofile` (violates my security policy)
-* `loadfile` (violates my security policy)
+* `dofile` (violates my security policy, use `require`)
+* `loadfile` (violates my security policy, use `require`)
 * `string.dump` (violates my security policy)
-* `string.pack` (I don't need it at this time)
-* `string.packsize` (I don't need it at this time)
-* `string.unpack` (I don't need it at this time)
+* `string.pack` (I don't need it at this time, use [msgpack](https://github.com/ofunc/lmodmsgpack))
+* `string.packsize` (I don't need it at this time, use [msgpack](https://github.com/ofunc/lmodmsgpack))
+* `string.unpack` (I don't need it at this time, use [msgpack](https://github.com/ofunc/lmodmsgpack))
 
 * * *
 
@@ -54,7 +55,7 @@ The following standard modules are not available:
 
 * `package` (violates my security policy)
 * `debug` (violates my security policy)
-* `coroutine` (no coroutine support yet, just use goroutine)
+* `coroutine` (no coroutine support yet, use goroutine)
 
 * * *
 
@@ -82,6 +83,7 @@ The following *core language* features are not supported:
 
 ## TODO
 
+* Running in browser (WebAssembly).
 * More tests.
 * Better error hints.
 * Code optimization.
