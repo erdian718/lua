@@ -1,4 +1,10 @@
 local test = {}
+local string = require 'string'
+
+function test.string()
+	assert(string.byte('\xc0') == 192)
+	assert(string.char(192, 193, 194) == '\xc0\xc1\xc2')
+end
 
 function test.table()
 	local t = {}
