@@ -25,12 +25,7 @@ Returns the difference, in seconds, from time `t1` to time `t2` (where the times
 ### os.execute(command[, arg1, ...])
 
 Executes the named program with the given arguments.
-Its first result is `true` if the command terminated successfully, or `nil` otherwise.
-After this first result the function returns a string plus a number, as follows:
-```
-'exit': the command terminated normally; the following number is the exit status of the command.
-'signal': the command was terminated by a signal; the following number is the signal that terminated the command.
-```
+Its first result is `true` if the command terminated successfully, or `nil` plus a string describing the error otherwise.
 
 ### os.exists(filename)
 

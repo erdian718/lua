@@ -29,7 +29,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
 	"ofunc/lua"
@@ -37,6 +36,7 @@ import (
 
 // The root path for the executable.
 var Root string
+
 var start = time.Now()
 
 func init() {
@@ -224,34 +224,12 @@ func lexecute(l *lua.State) int {
 	err := cmd.Run()
 	if err == nil {
 		l.Push(true)
-		l.Push("exit")
-		l.Push(0)
-	} else if e, ok := err.(*exec.ExitError); ok {
-		l.Push(nil)
-		if e.Exited() {
-			l.Push("exit")
-		} else {
-			l.Push("signal")
-		}
-
-		if status, ok := e.Sys().(syscall.WaitStatus); ok {
-			switch {
-			case status.Exited():
-				l.Push(int64(status.ExitCode))
-			case status.Signaled():
-				l.Push(status.Signal().String())
-			case status.Stopped():
-				l.Push(status.StopSignal().String())
-			default:
-				l.Push(nil)
-			}
-		}
+		return 1
 	} else {
 		l.Push(nil)
-		l.Push(nil)
 		l.Push(err.Error())
+		return 2
 	}
-	return 3
 }
 
 func lexists(l *lua.State) int {
