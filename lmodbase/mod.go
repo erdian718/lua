@@ -31,7 +31,7 @@ import (
 
 const (
 	// Version number
-	Version = "1.0.1"
+	Version = "1.1.0"
 )
 
 // The searchpaths for "require".
