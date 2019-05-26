@@ -39,11 +39,6 @@ var Root string
 
 var start = time.Now()
 
-func init() {
-	epath, _ := os.Executable()
-	Root = filepath.Dir(epath)
-}
-
 // Open opens the module.
 func Open(l *lua.State) int {
 	minfo := metainfo(l)
