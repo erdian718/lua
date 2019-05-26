@@ -24,7 +24,6 @@ package lmodbase
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"ofunc/lua"
@@ -157,19 +156,19 @@ func lrequire(l *lua.State) int {
 	name := l.ToString(1)
 	for _, p := range Paths {
 		p = filepath.Join(p, name)
-		f, err := os.Open(p + ".lua")
+		r, err := OpenSrc(p + ".lua")
 		if err != nil {
-			f, err = os.Open(p + "/init.lua")
+			r, err = OpenSrc(p + "/init.lua")
 			if err != nil {
 				continue
 			}
 		}
-		if err := l.LoadText(f, name, 0); err != nil {
+		if err := l.LoadText(r, name, 0); err != nil {
 			panic(err)
 			return 0
 		}
 		l.Call(0, 1)
-		f.Close()
+		r.Close()
 		if l.IsNil(-1) {
 			l.Push(true)
 		} else {

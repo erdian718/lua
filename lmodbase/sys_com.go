@@ -1,4 +1,4 @@
-// +build js,wasm
+// +build !js !wasm
 
 /*
 Copyright 2019 by ofunc
@@ -22,12 +22,14 @@ misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 */
 
-package lmodos
+package lmodbase
 
 import (
-	"path/filepath"
+	"io"
+	"os"
 )
 
-func init() {
-	Root = string(filepath.Separator)
+// OpenSrc opens the Lua src file.
+func OpenSrc(p string) (io.ReadCloser, error) {
+	return os.Open(p)
 }

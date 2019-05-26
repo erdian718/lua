@@ -1,4 +1,4 @@
-// +build !js
+// +build !js !wasm
 
 /*
 Copyright 2019 by ofunc
