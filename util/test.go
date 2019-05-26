@@ -59,16 +59,16 @@ func Test(l *lua.State, root string) error {
 			return nil
 		}
 
-		fmt.Println("****", path)
+		fmt.Println("::", path)
 		l.ForEachRaw(-1, func() bool {
 			if l.TypeOf(-1) == lua.TypeFunction {
-				fmt.Println("---- TEST", l.ToString(-2))
+				fmt.Println("  -> TESTING", l.ToString(-2))
 				if msg := l.PCall(0, 0, true); msg == nil {
 					pass += 1
-					fmt.Println("==== PASS")
+					fmt.Println("     PASS")
 				} else {
 					fail += 1
-					fmt.Println("==== FAIL:", msg)
+					fmt.Println("     FAIL:", msg)
 				}
 				l.Push(nil)
 			}
@@ -77,7 +77,7 @@ func Test(l *lua.State, root string) error {
 		l.Pop(1)
 		return nil
 	})
-	fmt.Printf(">>>> PASS %v, FAIL %v\n", pass, fail)
+	fmt.Printf("=> PASS %v, FAIL %v\n", pass, fail)
 	return err
 }
 

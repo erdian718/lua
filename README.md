@@ -1,6 +1,6 @@
 # Go Lua Compiler and VM
 
-This is a Lua 5.3 VM and compiler written in [Go](http://golang.org/). This is intended to allow easy embedding into Go programs, with minimal fuss and bother.
+This is a Lua 5.3 VM and compiler written in [Go](http://golang.org/). This is intended to allow easy embedding into Go programs, with minimal fuss and bother. It can also run in a browser by Webassembly.
 
 This repository is forked from [milochristiansen/lua](https://github.com/milochristiansen/lua), and I made some incompatible changes. So it's unlikely to be merged into the original repository.
 
@@ -53,7 +53,7 @@ The following standard functions are not available:
 
 The following standard modules are not available:
 
-* `package` (violates my security policy)
+* `package` (violates my security policy, use `util.AddPath`)
 * `debug` (violates my security policy)
 * `coroutine` (no coroutine support yet, use goroutine)
 
@@ -83,7 +83,6 @@ The following *core language* features are not supported:
 
 ## TODO
 
-* Running in browser (WebAssembly).
 * More tests.
 * Better error hints.
 * Code optimization.
