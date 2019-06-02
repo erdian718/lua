@@ -28,12 +28,7 @@ import (
 
 	"ofunc/lua"
 	"ofunc/lua/lmodbase"
-	"ofunc/lua/lmodio"
-	"ofunc/lua/lmodmath"
 	"ofunc/lua/lmodos"
-	"ofunc/lua/lmodstring"
-	"ofunc/lua/lmodtable"
-	"ofunc/lua/lmodutf8"
 )
 
 const (
@@ -71,19 +66,6 @@ func Strict(l *lua.State) {
 	l.Push(lundefined)
 	l.SetTableRaw(-3)
 	l.SetMetaTable(lua.GlobalsIndex)
-}
-
-// Open opens the buildin modules.
-func Open(l *lua.State) {
-	l.Push(lmodbase.Open)
-	l.Call(0, 0)
-
-	l.Preload("string", lmodstring.Open)
-	l.Preload("utf8", lmodutf8.Open)
-	l.Preload("table", lmodtable.Open)
-	l.Preload("math", lmodmath.Open)
-	l.Preload("io", lmodio.Open)
-	l.Preload("os", lmodos.Open)
 }
 
 // Run runs the specified Lua src file.
