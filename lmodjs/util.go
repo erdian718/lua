@@ -30,6 +30,9 @@ import (
 	"ofunc/lua"
 )
 
+// Registry key
+var RegistryKey = "js"
+
 var global = js.Global()
 var undefined = js.Undefined()
 var object = global.Get("Object")
@@ -48,8 +51,12 @@ func wrap(l *lua.State, v js.Value) {
 		l.Push(v.String())
 	default:
 		l.Push(v)
-		l.PushIndex(lua.FirstUpVal - 1)
-		l.SetMetaTable(-2)
+		l.Push(RegistryKey)
+		l.GetTableRaw(lua.RegistryIndex)
+		l.Push("m")
+		l.GetTableRaw(-2)
+		l.SetMetaTable(-3)
+		l.Pop(1)
 	}
 }
 
@@ -94,14 +101,41 @@ func value(l *lua.State, idx int) js.Value {
 }
 
 func vfunction(l *lua.State, idx int) js.Value {
-	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		wrap(l, this) // TODO metatable
+	regid += 1
+	fid := regid
+	v := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		l.Push(RegistryKey)
+		l.GetTableRaw(lua.RegistryIndex)
+		l.Push(fid)
+		if l.GetTableRaw(-2) == lua.TypeNil {
+			panic("js: call to released function")
+		}
+		l.Push(1)
+		l.GetTableRaw(-2)
+
+		wrap(l, this)
 		for _, arg := range args {
 			wrap(l, arg)
 		}
 		l.Call(len(args)+1, 1)
+		l.Pop(2)
 		return value(l, -1)
 	}).Value
+	v.Set("lua", regid)
+
+	l.Push(RegistryKey)
+	l.GetTableRaw(lua.RegistryIndex)
+	l.Push(fid)
+	l.NewTable(2, 0)
+	l.Push(1)
+	l.PushIndex(idx)
+	l.SetTableRaw(-3)
+	l.Push(2)
+	l.Push(v)
+	l.SetTableRaw(-3)
+	l.SetTableRaw(-3)
+	l.Pop(1)
+	return v
 }
 
 func vobject(l *lua.State, idx int) js.Value {

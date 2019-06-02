@@ -39,19 +39,19 @@ func jsmeta(l *lua.State) int {
 	l.SetTableRaw(idx)
 
 	l.Push("__index")
-	l.PushClosure(lIndex, idx)
+	l.Push(lIndex)
 	l.SetTableRaw(idx)
 
 	l.Push("__newindex")
-	l.PushClosure(lNewIndex, idx)
+	l.Push(lNewIndex)
 	l.SetTableRaw(idx)
 
 	l.Push("__pairs")
-	l.PushClosure(lPairs, idx)
+	l.Push(lPairs)
 	l.SetTableRaw(idx)
 
 	l.Push("__call")
-	l.PushClosure(lCall, idx)
+	l.Push(lCall)
 	l.SetTableRaw(idx)
 
 	return idx
@@ -84,7 +84,7 @@ func lNewIndex(l *lua.State) int {
 
 func lPairs(l *lua.State) int {
 	iter := object.Call("entries", js.ValueOf(l.GetRaw(1))).Call("entries")
-	l.PushClosure(func(l *lua.State) int {
+	l.Push(func(l *lua.State) int {
 		x := iter.Call("next")
 		if x.Get("done").Bool() {
 			return 0
@@ -93,7 +93,7 @@ func lPairs(l *lua.State) int {
 		wrap(l, y.Index(0))
 		wrap(l, y.Index(1))
 		return 2
-	}, lua.FirstUpVal-1)
+	})
 	return 1
 }
 

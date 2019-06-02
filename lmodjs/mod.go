@@ -33,10 +33,13 @@ import (
 
 // Open opens the module.
 func Open(l *lua.State) int {
-	l.Push("js")
-	l.NewTable(0, 0)
-	l.SetTableRaw(lua.RegistryIndex)
 	m := jsmeta(l)
+	l.Push(RegistryKey)
+	l.NewTable(0, 0)
+	l.Push("m")
+	l.PushIndex(m)
+	l.SetTableRaw(-3)
+	l.SetTableRaw(lua.RegistryIndex)
 	l.NewTable(0, 4)
 
 	l.Push("version")
@@ -54,7 +57,7 @@ func Open(l *lua.State) int {
 	l.SetTableRaw(-3)
 
 	l.Push("new")
-	l.PushClosure(lNew, m)
+	l.Push(lNew)
 	l.SetTableRaw(-3)
 
 	return 1
