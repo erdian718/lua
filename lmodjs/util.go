@@ -33,11 +33,15 @@ import (
 // Registry key
 var RegistryKey = "js"
 
+// Lua key in js object
+var LuaKey = "__lua__"
+
 var global = js.Global()
 var undefined = js.Undefined()
+var null = js.Null()
 var object = global.Get("Object")
 var array = global.Get("Array")
-var regid int64
+var regid int32
 
 func wrap(l *lua.State, v js.Value) {
 	switch v.Type() {
@@ -106,7 +110,7 @@ func vfunction(l *lua.State, idx int) js.Value {
 	v := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		l.Push(RegistryKey)
 		l.GetTableRaw(lua.RegistryIndex)
-		l.Push(fid)
+		l.Push(int64(fid))
 		if l.GetTableRaw(-2) == lua.TypeNil {
 			panic("js: call to released function")
 		}
@@ -121,11 +125,11 @@ func vfunction(l *lua.State, idx int) js.Value {
 		l.Pop(2)
 		return value(l, -1)
 	}).Value
-	v.Set("lua", regid)
+	v.Set(LuaKey, fid)
 
 	l.Push(RegistryKey)
 	l.GetTableRaw(lua.RegistryIndex)
-	l.Push(fid)
+	l.Push(int64(fid))
 	l.NewTable(2, 0)
 	l.Push(1)
 	l.PushIndex(idx)

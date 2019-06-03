@@ -40,7 +40,7 @@ func Open(l *lua.State) int {
 	l.PushIndex(m)
 	l.SetTableRaw(-3)
 	l.SetTableRaw(lua.RegistryIndex)
-	l.NewTable(0, 4)
+	l.NewTable(0, 8)
 
 	l.Push("version")
 	l.Push("0.0.1")
@@ -60,6 +60,10 @@ func Open(l *lua.State) int {
 	l.Push(lNew)
 	l.SetTableRaw(-3)
 
+	l.Push("free")
+	l.Push(lFree)
+	l.SetTableRaw(-3)
+
 	return 1
 }
 
@@ -76,4 +80,26 @@ func lNew(l *lua.State) int {
 	}
 	wrap(l, js.ValueOf(l.GetRaw(1)).New(args...))
 	return 1
+}
+
+func lFree(l *lua.State) int {
+	if v, ok := l.GetRaw(1).(js.Value); ok {
+		if x := v.Get(LuaKey); x != undefined && x != null {
+			id := x.Int()
+			l.Push(RegistryKey)
+			l.GetTableRaw(lua.RegistryIndex)
+			l.Push(id)
+			l.GetTableRaw(-2)
+			if !l.IsNil(-1) {
+				l.Push(2)
+				l.GetTableRaw(-2)
+				l.GetRaw(-1).(js.Func).Release()
+				l.Pop(2)
+				l.Push(id)
+				l.Push(nil)
+				l.SetTableRaw(-3)
+			}
+		}
+	}
+	return 0
 }
