@@ -122,8 +122,9 @@ func vfunction(l *lua.State, idx int) js.Value {
 			wrap(l, arg)
 		}
 		l.Call(len(args)+1, 1)
-		l.Pop(2)
-		return value(l, -1)
+		v := value(l, -1)
+		l.Pop(3)
+		return v
 	}).Value
 	v.Set(LuaKey, fid)
 
