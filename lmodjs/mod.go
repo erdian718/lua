@@ -56,6 +56,10 @@ func Open(l *lua.State) int {
 	l.Push(lType)
 	l.SetTableRaw(-3)
 
+	l.Push("value")
+	l.Push(lValue)
+	l.SetTableRaw(-3)
+
 	l.Push("new")
 	l.Push(lNew)
 	l.SetTableRaw(-3)
@@ -69,6 +73,11 @@ func Open(l *lua.State) int {
 
 func lType(l *lua.State) int {
 	l.Push(js.ValueOf(l.GetRaw(1)).Type().String())
+	return 1
+}
+
+func lValue(l *lua.State) int {
+	wrap(l, value(l, 1))
 	return 1
 }
 
