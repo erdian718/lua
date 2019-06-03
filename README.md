@@ -21,11 +21,20 @@ func main() {
 }
 ```
 
+```lua
+local js = require 'js'
+local window = js.global
+
+window:setTimeout(function()
+	window:alert('Hello world!')
+end, 1000)
+```
+
 Please refer to the README for standard libraries.
 
 ## Dependencies
 
-[Go 1.12+](http://golang.org/)
+* [Go 1.12+](http://golang.org/)
 
 ## Modules
 
