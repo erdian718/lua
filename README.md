@@ -42,6 +42,7 @@ Please refer to the README for standard libraries.
 * [lmodmsgpack](https://github.com/ofunc/lmodmsgpack) - MessagePack for Lua.
 * [lmodoffice](https://github.com/ofunc/lmodoffice) - A simple Lua module for converting various office documents into OOXML format files.
 * [lmodxlsx](https://github.com/ofunc/lmodxlsx) - plandem/xlsx bindings for Lua.
+* [mithril](https://github.com/ofunc/mithril) - Mithril.js bindings for Lua.
 * [stream](https://github.com/ofunc/stream) - A simple lazy list module for Lua.
 
 ## Missing Stuff
