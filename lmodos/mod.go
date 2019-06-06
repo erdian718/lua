@@ -110,6 +110,10 @@ func Open(l *lua.State) int {
 	l.Push(lsetlocale)
 	l.SetTableRaw(-3)
 
+	l.Push("sleep")
+	l.Push(lsleep)
+	l.SetTableRaw(-3)
+
 	l.Push("stat")
 	l.PushClosure(lstat, minfo)
 	l.SetTableRaw(-3)
@@ -402,6 +406,11 @@ func lrename(l *lua.State) int {
 }
 
 func lsetlocale(l *lua.State) int {
+	return 0
+}
+
+func lsleep(l *lua.State) int {
+	time.Sleep(time.Duration(l.ToInteger(1)) * time.Millisecond)
 	return 0
 }
 

@@ -10,9 +10,10 @@ end
 
 function test.clock()
 	local c1 = os.clock()
+	os.sleep(100)
 	local c2 = os.clock()
 	assert(type(c1) == 'number' and type(c2) == 'number')
-	assert(c1 >= 0 and c2 >= c1)
+	assert(c1 >= 0 and c2-c1 > 0.09999)
 end
 
 function test.date()

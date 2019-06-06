@@ -92,6 +92,10 @@ The root path of the executable that started the current process.
 Sets the current locale of the program.
 The function returns the name of the new locale, or nil if the request cannot be honored.
 
+### os.sleep(n)
+
+Pauses the current routine for at least the `n` milliseconds.
+
 ### os.stat(file)
 
 Returns the information describing `file`.
