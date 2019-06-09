@@ -34,11 +34,12 @@ Please refer to the README for standard libraries.
 
 ## Dependencies
 
-* [Go 1.12+](http://golang.org/)
+* [Go 1.12+](https://golang.org/)
 
 ## Modules
 
 * [lmodbolt](https://github.com/ofunc/lmodbolt) - boltdb/bolt bindings for Lua.
+* [lmodhttpclient](https://github.com/ofunc/lmodhttpclient) - http.Client bindings for Lua.
 * [lmodmsgpack](https://github.com/ofunc/lmodmsgpack) - MessagePack for Lua.
 * [lmodoffice](https://github.com/ofunc/lmodoffice) - A simple Lua module for converting various office documents into OOXML format files.
 * [lmodxlsx](https://github.com/ofunc/lmodxlsx) - plandem/xlsx bindings for Lua.
