@@ -38,6 +38,7 @@ Please refer to the README for standard libraries.
 
 ## Modules
 
+* [ioc](https://github.com/ofunc/ioc) - Inversion of Control module for Lua.
 * [lmodbolt](https://github.com/ofunc/lmodbolt) - boltdb/bolt bindings for Lua.
 * [lmodhttpclient](https://github.com/ofunc/lmodhttpclient) - http.Client bindings for Lua.
 * [lmodmsgpack](https://github.com/ofunc/lmodmsgpack) - MessagePack for Lua.
