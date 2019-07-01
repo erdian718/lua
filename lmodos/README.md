@@ -8,10 +8,6 @@ This library is implemented through table `os`.
 
 Returns an absolute representation of `path`.
 
-### os.clock()
-
-Returns an approximation of the amount in seconds of CPU time used by the program.
-
 ### os.date([format[, time]])
 
 Returns a string or a table containing date and time, formatted according to the given string format.

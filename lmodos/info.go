@@ -46,7 +46,7 @@ func metainfo(l *lua.State) int {
 		case "size":
 			l.Push(info.Size())
 		case "modtime":
-			l.Push(info.ModTime().Unix())
+			l.Push(info.ModTime())
 		default:
 			l.Push(nil)
 		}

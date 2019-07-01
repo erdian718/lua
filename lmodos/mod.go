@@ -50,10 +50,6 @@ func Open(l *lua.State) int {
 	l.Push(labs)
 	l.SetTableRaw(-3)
 
-	l.Push("clock")
-	l.Push(lclock)
-	l.SetTableRaw(-3)
-
 	l.Push("date")
 	l.Push(ldate)
 	l.SetTableRaw(-3)
@@ -148,14 +144,13 @@ func labs(l *lua.State) int {
 	}
 }
 
-func lclock(l *lua.State) int {
-	l.Push(float64(time.Now().Sub(start)) / float64(time.Second))
-	return 1
-}
-
 func ldate(l *lua.State) int {
 	f := l.OptString(1, "%c")
-	t := time.Unix(l.OptInteger(2, time.Now().Unix()), 0)
+	t := time.Now()
+	if !l.IsNil(2) {
+		t = l.GetRaw(2).(time.Time)
+	}
+
 	if strings.HasPrefix(f, "!") {
 		t = t.UTC()
 		f = f[1:]
@@ -202,9 +197,9 @@ func ldate(l *lua.State) int {
 }
 
 func ldifftime(l *lua.State) int {
-	x := l.ToInteger(1)
-	y := l.ToInteger(2)
-	l.Push(x - y)
+	x := l.GetRaw(1).(time.Time)
+	y := l.GetRaw(2).(time.Time)
+	l.Push(float64(x.Sub(y)) / float64(time.Second))
 	return 1
 }
 
@@ -444,7 +439,7 @@ func lstat(l *lua.State) int {
 
 func ltime(l *lua.State) int {
 	if l.IsNil(1) {
-		l.Push(time.Now().Unix())
+		l.Push(time.Now())
 	} else {
 		l.Push("year")
 		l.GetTable(1)
@@ -470,7 +465,7 @@ func ltime(l *lua.State) int {
 		l.GetTable(1)
 		sec := int(l.OptInteger(-1, 0))
 
-		l.Push(time.Date(year, month, day, hour, min, sec, 0, time.Local).Unix())
+		l.Push(time.Date(year, month, day, hour, min, sec, 0, time.Local))
 	}
 	return 1
 }
