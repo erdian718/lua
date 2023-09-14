@@ -25,14 +25,14 @@ misrepresented as being the original software.
 package util
 
 import (
-	"ofunc/lua"
-	"ofunc/lua/lmodbase"
-	"ofunc/lua/lmodio"
-	"ofunc/lua/lmodmath"
-	"ofunc/lua/lmodos"
-	"ofunc/lua/lmodstring"
-	"ofunc/lua/lmodtable"
-	"ofunc/lua/lmodutf8"
+	"github.com/ofunc/lua"
+	"github.com/ofunc/lua/lmodbase"
+	"github.com/ofunc/lua/lmodio"
+	"github.com/ofunc/lua/lmodmath"
+	"github.com/ofunc/lua/lmodos"
+	"github.com/ofunc/lua/lmodstring"
+	"github.com/ofunc/lua/lmodtable"
+	"github.com/ofunc/lua/lmodutf8"
 )
 
 // Open opens the buildin modules.

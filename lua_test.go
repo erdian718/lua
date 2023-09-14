@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"ofunc/lua"
-	"ofunc/lua/util"
+	"github.com/ofunc/lua"
+	"github.com/ofunc/lua/util"
 )
 
 func TestMain(m *testing.M) {

@@ -12,7 +12,7 @@ The strftime function and string pattern matching is currently copied from [yuin
 package main
 
 import (
-	"ofunc/lua/util"
+	"github.com/ofunc/lua/util"
 )
 
 func main() {

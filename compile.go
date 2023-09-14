@@ -22,7 +22,7 @@ misrepresented as being the original software.
 
 package lua
 
-import "ofunc/lua/ast"
+import "github.com/ofunc/lua/ast"
 import "fmt"
 
 //import "runtime"

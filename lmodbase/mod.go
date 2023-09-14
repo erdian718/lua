@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 )
 
 const (

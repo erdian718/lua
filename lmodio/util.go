@@ -25,7 +25,7 @@ package lmodio
 import (
 	"io"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 )
 
 func toReader(l *lua.State, i int) io.Reader {
