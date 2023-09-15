@@ -27,8 +27,8 @@ package lmodstring
 import (
 	"fmt"
 
-	"ofunc/lua"
-	"ofunc/lua/lmodstring/pm"
+	"github.com/ofunc/lua"
+	"github.com/ofunc/lua/lmodstring/pm"
 )
 
 func gsubstr(l *lua.State, str string, matches []*pm.MatchData) string {

@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"unicode/utf8"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 )
 
 // Open opens the module.

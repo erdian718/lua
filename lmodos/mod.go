@@ -31,7 +31,7 @@ import (
 	"strings"
 	"time"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 )
 
 // The root path for the executable.

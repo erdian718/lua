@@ -28,7 +28,7 @@ package lmodjs
 import (
 	"syscall/js"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 )
 
 // Open opens the module.
@@ -93,7 +93,7 @@ func lNew(l *lua.State) int {
 
 func lFree(l *lua.State) int {
 	if v, ok := l.GetRaw(1).(js.Value); ok {
-		if x := v.Get(LuaKey); x != undefined && x != null {
+		if x := v.Get(LuaKey); !(x.IsUndefined() || x.IsNull()) {
 			id := x.Int()
 			l.Push(RegistryKey)
 			l.GetTableRaw(lua.RegistryIndex)

@@ -25,7 +25,7 @@ package lmodos
 import (
 	"os"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 )
 
 func metainfo(l *lua.State) int {

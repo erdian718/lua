@@ -22,7 +22,7 @@ misrepresented as being the original software.
 
 package lua
 
-import "ofunc/lua/ast"
+import "github.com/ofunc/lua/ast"
 
 // TODO: It is possible to have more constants than can be fit into an Bx field, in which case a
 // LOADKX instruction should be used.

@@ -26,8 +26,8 @@ import (
 	"fmt"
 	"strings"
 
-	"ofunc/lua"
-	"ofunc/lua/lmodstring/pm"
+	"github.com/ofunc/lua"
+	"github.com/ofunc/lua/lmodstring/pm"
 )
 
 // Open opens the module.

@@ -26,7 +26,7 @@ import (
 	"io"
 	"os/exec"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 )
 
 type prog struct {
